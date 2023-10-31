@@ -81,7 +81,7 @@ def append_iterable_to_file(path_to_file: Path, iterable: set):
             file.write(f'\n{line}')
 
 
-def get_sources_from_github(page: int = 10, query: str = 'filename:proxies.txt') -> list[str] | None:
+def get_sources_from_github(page: int = 10, query: str = 'filename:proxies.txt') -> requests.Response | None:
     params = {
         'p': page,
         # 'o': 'desc',
@@ -92,14 +92,17 @@ def get_sources_from_github(page: int = 10, query: str = 'filename:proxies.txt')
     try:
         response = requests.get('https://github.com/search', params=params, cookies=COOKIES, headers=HEADERS,
                                 timeout=10)
-        if not response.ok:
-            return
-        soup = BeautifulSoup(response.text, 'lxml')
-        all_a = soup.find_all('a', {'data-testid': 'link-to-search-result'})
-        return [f'https://github.com{a.get("href")}' for a in all_a]
+        return response if response.ok else None
     except Exception as e:
-        print(e)
-        return
+        import logging
+        logging.exception(e)
+        return None
+
+
+def parse_response(response_text: str) -> list[str]:
+    soup = BeautifulSoup(response_text, 'lxml')
+    all_a = soup.find_all('a', {'data-testid': 'link-to-search-result'})
+    return [f'https://github.com{a.get("href")}' for a in all_a]
 
 
 def clean_file_from_duplicates(path_to_file: Path | str) -> NoReturn:
@@ -130,12 +133,15 @@ def get_sources_dict(sources_list: tuple[Path]) -> dict[str, tuple]:
 
 
 async def update_sources():
-    for query, file_name in SEARCH_QUERIES.items():
+    for query in SEARCH_QUERIES:
         print(f'searching for {query}')
-        path_to_source = Path(PATH_TO_SOURCES, file_name)
+        path_to_source = Path(PATH_TO_SOURCES, query['file_name'])
         links = []
         for page in range(DEPTH):
-            links_from_github: list[str] | None = get_sources_from_github(page, query)
+            response: requests.Response | None = get_sources_from_github(page, query['searching_query'])
+            if not response:
+                continue
+            links_from_github = parse_response(response.text)
             if links_from_github:
                 links.extend(links_from_github)
         print(*links, sep='\n')

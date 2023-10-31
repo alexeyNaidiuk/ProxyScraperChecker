@@ -46,10 +46,10 @@ REGEX_PATTERN: re.Pattern = re.compile(
 )
 
 
-SEARCH_QUERIES = {
-    'path:http_proxies.txt': 'http.txt',
-    'path:proxies.txt': 'http.txt',
-    'path:https_proxies.txt': 'https.txt',
-    'path:socks5_proxies.txt': 'socks5.txt',
-    'path:socks4_proxies.txt': 'socks4.txt',
-}
+SEARCH_QUERIES = [
+    {'searching_query': 'path:http_proxies.txt', 'file_name': 'http.txt'},
+    {'searching_query': 'path:proxies.txt', 'file_name': 'http.txt'},
+    {'searching_query': 'path:https_proxies.txt', 'file_name': 'https.txt'},
+    {'searching_query': 'path:socks5_proxies.txt', 'file_name': 'socks5.txt'},
+    {'searching_query': 'path:socks4_proxies.txt', 'file_name': 'socks4.txt'},
+]
